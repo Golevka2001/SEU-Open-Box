@@ -1,0 +1,7 @@
+.idea/
+__pycache__/
+
+# private
+config_local.json
+in.xls
+out.csv

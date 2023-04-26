@@ -1,0 +1,18 @@
+{
+  "id": "【在这里填写您的一卡通号】",
+  "password": "【在这里填写您的登录密码】",
+  "headers": {
+    "Accept-Encoding": "gzip, deflate, br",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
+  },
+  "login_urls": [
+    "https://vpn.seu.edu.cn:444/public/cas_login?redirect_uri=https://dekt-seu-edu-cn.vpn.seu.edu.cn:8118/zhtw/?_CASFTL=1&entry_id=1",
+    "https://newids.seu.edu.cn/authserver/login",
+    "https://newids.seu.edu.cn/authserver/login?service=http://dekt.seu.edu.cn/zhtw/",
+    "https://dekt-seu-edu-cn.vpn.seu.edu.cn:8118/zhtw/admin?.me=c3lzLmluZGV4"
+  ],
+  "query_urls": [
+    "https://dekt-seu-edu-cn.vpn.seu.edu.cn:8118/zhtw/st/clsq/cxxs?keyword={}&.me=MjBmYTZjZDYtZTc1My00MzJjLWI2MDItYTJjMzMwOTUzMmI0&sf_request_type=ajax",
+    "https://dekt-seu-edu-cn.vpn.seu.edu.cn:8118/zhtw/st/clsq/zdls/cxls?keyword={}&.me=MjBmYTZjZDYtZTc1My00MzJjLWI2MDItYTJjMzMwOTUzMmI0&sf_request_type=ajax"
+  ]
+}
