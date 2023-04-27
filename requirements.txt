@@ -1,0 +1,6 @@
+requests
+Js2Py
+beautifulsoup4
+
+pandas
+xlrd
