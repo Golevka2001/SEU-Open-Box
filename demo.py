@@ -2,27 +2,28 @@
 @File: demo.py
 @Brief: 一个小例子：读取成绩单中的一卡通号，查询对应姓名，输出到csv文件
 @Author: Gol3vka
-@Last Modified: 2023-04-26
+@Last Modified: 2023-04-27
 """
 
-import pandas as pd
-from open_box import OpenBox
 from multiprocessing.dummy import Pool
 from time import time
+
+import pandas as pd
+
+from open_box import OpenBox
 
 
 # 线程入口
 def query(item):
-    global cnt
-    global name_df
-    cnt += 1
-    print(f'{cnt}/149')
+    global ob, name_df, cnt
     index, row = item
     name = ob.id2name(row[0])
     name_df.loc[index] = [name]
+    cnt += 1
+    print(f'{cnt}/149')
 
 
-# 计时
+# 计时开始
 start = time()
 
 # 初始化变量
@@ -37,7 +38,7 @@ id_df = pd.read_excel('./in.xls', usecols=[1], skiprows=3, nrows=149, dtype=str)
 pool = Pool(10)
 pool.map(query, id_df.iterrows())
 
-# 计时
+# 计时结束
 end = time()
 print(f'查询耗时：{end - start}s')
 
