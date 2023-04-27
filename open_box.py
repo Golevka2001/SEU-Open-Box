@@ -2,11 +2,14 @@
 @File: open_box.py
 @Brief: 盒武器，需要使用自己的账号登录系统，可以通过姓名或一卡通号查询人员信息
 @Author: Gol3vka
-@Last Modified: 2023-04-26
+@Last Modified: 2023-04-27
+@Changelog: 修改查询结果为空时的返回值
 """
 
-import js2py
 import json
+import os
+
+import js2py
 import requests
 from bs4 import BeautifulSoup
 
@@ -18,6 +21,9 @@ class OpenBox:
     def __init__(self, debug=False):
         # 读取配置文件
         config_path = './config{}.json'.format('_local' if debug else '')
+        if not os.path.exists(config_path):
+            raise FileNotFoundError('请创建{}文件{}'.format(
+                config_path, '，或修改参数debug=False' if debug else ''))
         with open(config_path) as file:
             config = json.load(file)
         self.id_ = config['id']
@@ -66,7 +72,8 @@ class OpenBox:
                 login_data[element['name']] = element['value']
             elif element.has_attr('id'):
                 login_data[element['id']] = element['value']
-        login_data['password'] = self._encrypt_AES(self.password_, login_data['pwdDefaultEncryptSalt'])
+        login_data['password'] = self._encrypt_AES(
+            self.password_, login_data['pwdDefaultEncryptSalt'])
 
         # 提交登录信息（频繁登录存在验证码，无法解决）
         response = session_obj.post(self.login_urls_[1], data=login_data)
@@ -120,28 +127,53 @@ class OpenBox:
         response_json = json.loads(response)
         num = len(response_json['data'])
         print(f'共找到{num}条记录')
+        if num == 0:
+            return [None]
         info = [dict() for _ in range(num)]
         for i in range(num):
             data = response_json['data'][i]
             if is_student:
-                info[i] = {'姓名': data['xm'],
-                           '性别': data['xb']['mc'] if data['xb'] else None,
-                           '政治面貌': data['zzmm']['mc'] if data['zzmm'] else None,
-                           '入学年份': data['rxnf'],
-                           '学制': data['xz'] + '年',
-                           '学院': '[{}]{}-{}'.format(data['xy']['px'], data['xy']['mc'], data['xy']['ywmc']),
-                           '学号-分流前': data['id'],
-                           '学号-分流后': data['ykth'],
-                           '一卡通号': data['xh']}
+                info[i] = {
+                    '姓名':
+                        data['xm'],
+                    '性别':
+                        data['xb']['mc'] if data['xb'] else None,
+                    '政治面貌':
+                        data['zzmm']['mc'] if data['zzmm'] else None,
+                    '入学年份':
+                        data['rxnf'],
+                    '学制':
+                        data['xz'] + '年',
+                    '学院':
+                        '[{}]{}-{}'.format(data['xy']['px'], data['xy']['mc'],
+                                           data['xy']['ywmc']),
+                    '学号-分流前':
+                        data['id'],
+                    '学号-分流后':
+                        data['ykth'],
+                    '一卡通号':
+                        data['xh']
+                }
             else:
-                info[i] = {'姓名': data['xm'],
-                           '性别': data['xb'],
-                           '出生日期': data['csrq'],
-                           '政治面貌': data['zzmm']['mc'] if data['zzmm'] else None,
-                           '学院': '[{}]{}-{}'.format(data['xy']['px'], data['xy']['mc'], data['xy']['ywmc']),
-                           '工号': data['gh'],
-                           '联系电话': data['lxdh'],
-                           '邮箱': data['dzxx']}
+                info[i] = {
+                    '姓名':
+                        data['xm'],
+                    '性别':
+                        data['xb'],
+                    '出生日期':
+                        data['csrq'],
+                    '政治面貌':
+                        data['zzmm']['mc'] if data['zzmm'] else None,
+                    '学院':
+                        '[{}]{}-{}'.format(data['xy']['px'], data['xy']['mc'],
+                                           data['xy']['ywmc']),
+                    '工号':
+                        data['gh'],
+                    '联系电话':
+                        data['lxdh'],
+                    '邮箱':
+                        data['dzxx']
+                }
         return info
 
     def id2name(self, query_id: str, is_student: bool = True) -> str:
@@ -152,11 +184,11 @@ class OpenBox:
             is_student(bool): 是否为学生，否则为教职工
 
         Returns:
-            str: 姓名，不存在时返回'null'
+            str: 姓名（默认一个一卡通号只能查询到一个结果），不存在时返回None
         """
         response = self._query(query_id, is_student)
         response_json = json.loads(response)
-        return response_json['data'][0]['xm'] if response_json['data'] else 'null'
+        return response_json['data'][0]['xm'] if response_json['data'] else None
 
     def id2info(self, query_id: str, is_student: bool = True) -> dict:
         """一卡通号 -> 详细信息
@@ -166,7 +198,7 @@ class OpenBox:
             is_student(bool): 是否为学生，否则为教职工
 
         Returns:
-            dict: 包含详细信息的字典（默认一个一卡通号只能查询到一个结果）
+            dict: 包含详细信息的字典（默认一个一卡通号只能查询到一个结果），不存在时返回None
         """
         response = self._query(query_id, is_student)
         info = self._parse_response(response, is_student)
@@ -180,7 +212,7 @@ class OpenBox:
             is_student(bool): 是否为学生，否则为教职工
 
         Returns:
-            list: 列表项数等于查询结果数，每一项为包含详细信息的字典，学生与教职工有区别
+            list: 列表项数等于查询结果数，每一项为包含详细信息的字典，学生与教职工有区别，不存在时返回[None]
         """
         response = self._query(query_name, is_student)
         info = self._parse_response(response, is_student)
@@ -190,9 +222,9 @@ class OpenBox:
 if __name__ == '__main__':
     # 涉及隐私，不提供测试数据
     ob = OpenBox(True)
-    print(ob.id2name('xx', True))
-    print(ob.id2name('xx', False))
-    print(ob.id2info('xx', True))
-    print(ob.id2info('xx', False))
-    print(ob.name2info('xx', True))
-    print(ob.name2info('xx', False))
+    # print(ob.id2name('xx', True))
+    # print(ob.id2name('xx', False))
+    # print(ob.id2info('xx', True))
+    # print(ob.id2info('xx', False))
+    # print(ob.name2info('xx', True))
+    # print(ob.name2info('xx', False))
